@@ -1,3 +1,4 @@
+# rag_pipeline.py
 import os
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
@@ -7,45 +8,35 @@ from langchain.chains import RetrievalQA
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_huggingface import HuggingFaceEndpoint
 
-
-# --- Load .env ---
+# Load .env (optional, in case running locally)
 load_dotenv()
-hf_api_key = os.getenv("HF_API_KEY", "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")  # fallback to your key
+hf_api_key = os.getenv("HF_API_KEY", "")
 
-
-# --- Load documents ---
+# --- Load PDF documents ---
 def load_documents(pdf_path: str):
-    """Load PDF and return documents"""
     loader = PyPDFLoader(pdf_path)
-    documents = loader.load()
-    return documents
+    return loader.load()
 
-
-# --- Split documents ---
+# --- Split documents into chunks ---
 def split_documents(documents):
-    """Split into chunks"""
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     return text_splitter.split_documents(documents)
 
-
-# --- Create vector DB ---
+# --- Create FAISS vector database ---
 def create_vector_db(chunks):
-    """Create FAISS vector DB with HuggingFace embeddings"""
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     vector_db = FAISS.from_documents(chunks, embeddings)
     return vector_db
 
-
-# --- Build QA chain ---
+# --- Build RAG QA chain ---
 def build_qa_chain(vector_db):
-    """Build RetrievalQA chain using HuggingFace Inference API"""
+    # Use a free Hugging Face inference-ready model
     llm = HuggingFaceEndpoint(
-        repo_id="mistralai/Mistral-7B-Instruct-v0.2",  # free instruct-tuned model
+        repo_id="tiiuae/falcon-7b-instruct",
         token=hf_api_key,
         temperature=0.3,
         max_new_tokens=300,
     )
-
     retriever = vector_db.as_retriever(search_kwargs={"k": 3})
 
     qa_chain = RetrievalQA.from_chain_type(
@@ -56,9 +47,7 @@ def build_qa_chain(vector_db):
     )
     return qa_chain
 
-
 # --- Ask question ---
 def ask_question(qa_chain, query: str):
-    """Run query on RAG pipeline"""
-    result = qa_chain.invoke({"query": query})
-    return result
+    # safer than invoke()
+    return qa_chain.run(query)
