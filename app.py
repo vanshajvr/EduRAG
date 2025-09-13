@@ -1,25 +1,38 @@
-import os
-import time
 import streamlit as st
-from dotenv import load_dotenv
-load_dotenv()
+from rag_pipeline import load_documents, split_documents, create_vector_db, build_qa_chain, ask_question
 
+st.set_page_config(page_title="Campus Knowledge Copilot", layout="wide")
 
-from rag_pipeline import VectorIndex, Generator, RAGPipeline
+st.title("🎓 Campus Knowledge Copilot (RAG)")
 
+# Sidebar for PDF upload
+st.sidebar.header("Upload Knowledge Base")
+uploaded_file = st.sidebar.file_uploader("Upload a PDF", type="pdf")
 
-st.set_page_config(page_title="Campus Knowledge Copilot", page_icon="🎓")
+if uploaded_file is not None:
+    with open("uploaded_file.pdf", "wb") as f:
+        f.write(uploaded_file.getbuffer())
 
+    st.sidebar.success("✅ PDF uploaded successfully")
 
-st.title("🎓 Campus Knowledge Copilot")
-st.caption("Ask questions over your notes, PDFs, and bookmarked URLs. RAG-powered, with source citations.")
+    # Load pipeline
+    docs = load_documents("uploaded_file.pdf")
+    chunks = split_documents(docs)
+    vector_db = create_vector_db(chunks)
+    qa_chain = build_qa_chain(vector_db)
 
+    st.success("Knowledge Base Ready ✅ Ask your questions below!")
 
-# Sidebar config
-with st.sidebar:
-st.header("Settings")
-k = st.slider("Top-K documents", 2, 10, 5)
-model = st.text_input("OpenAI Chat Model", os.getenv("OPENAI_MODEL", "gpt-4o-mini"))
-api_key = st.text_input("OPENAI_API_KEY", type="password", value=os.getenv("OPENAI_API_KEY", ""))
-st.divider()
-st.markdown
+    query = st.text_input("💬 Ask a question about the uploaded PDF:")
+    if query:
+        with st.spinner("Thinking... 🤔"):
+            result = ask_question(qa_chain, query)
+            st.write("### 📌 Answer:")
+            st.write(result["result"])
+
+            # Show sources
+            with st.expander("📄 Source Documents"):
+                for doc in result["source_documents"]:
+                    st.markdown(doc.page_content[:500] + "...")
+else:
+    st.info("Please upload a PDF from the sidebar to get started.")
