@@ -41,8 +41,17 @@ if uploaded_file:
     query = st.text_input("Ask a question about the uploaded PDF:")
     if query:
         with st.spinner("Thinking..."):
-            answer = ask_question(qa_chain, query)
+            # Use dictionary input to avoid ValueError
+            answer_data = ask_question(qa_chain, query)
+            
+            # Display answer
             st.subheader("Answer:")
-            st.write(answer)
+            st.write(answer_data["result"])
+
+            # Display sources
+            with st.expander("Source Documents"):
+                for doc in answer_data["source_documents"]:
+                    st.markdown(f"**Source:** {doc.metadata.get('source', 'Unknown')}")
+                    st.write(doc.page_content[:500] + "...")
 else:
     st.info("Please upload a PDF from the sidebar to get started.")
