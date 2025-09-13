@@ -49,5 +49,6 @@ def build_qa_chain(vector_db):
 
 # --- Ask question ---
 def ask_question(qa_chain, query: str):
-    # safer than invoke()
-    return qa_chain.run(query)
+    result = qa_chain({"query": query})
+    return result  # result["result"] is the answer, result["source_documents"] has sources
+
