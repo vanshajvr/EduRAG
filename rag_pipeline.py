@@ -1,40 +1,41 @@
-# rag_pipeline.py
 import os
+from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
-from langchain.llms import HuggingFacePipeline
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEndpoint
 
-# --- Load documents ---
+# Load .env
+load_dotenv()
+hf_api_key = os.getenv("HF_API_KEY", "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")
+
+# --- Load PDF ---
 def load_documents(pdf_path: str):
     loader = PyPDFLoader(pdf_path)
     return loader.load()
 
-# --- Split documents ---
+# --- Split into chunks ---
 def split_documents(documents):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    return splitter.split_documents(documents)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    return text_splitter.split_documents(documents)
 
 # --- Create vector DB ---
 def create_vector_db(chunks):
-    embeddings = "sentence-transformers/all-MiniLM-L6-v2"  # small free embedding model
-    from langchain_huggingface import HuggingFaceEmbeddings
-    emb_model = HuggingFaceEmbeddings(model_name=embeddings)
-    vector_db = FAISS.from_documents(chunks, emb_model)
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    vector_db = FAISS.from_documents(chunks, embeddings)
     return vector_db
 
 # --- Build QA chain ---
 def build_qa_chain(vector_db):
-    # Load small text generation model locally
-    tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-small")
-    model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")
-    pipe = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
-    llm = HuggingFacePipeline(pipeline=pipe)
-
+    llm = HuggingFaceEndpoint(
+        repo_id="google/flan-t5-small",
+        token=hf_api_key,
+        temperature=0.3,
+        max_new_tokens=300
+    )
     retriever = vector_db.as_retriever(search_kwargs={"k": 3})
-
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
         retriever=retriever,
