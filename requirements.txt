@@ -3,9 +3,13 @@ langchain
 langchain-community
 faiss-cpu
 sentence-transformers
-transformers
-torch
-pandas
-numpy
+pydantic
 python-dotenv
 pypdf
+unstructured
+beautifulsoup4
+requests
+huggingface_hub
+transformers
+pyvis
+graphviz
