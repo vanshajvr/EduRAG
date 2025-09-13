@@ -1,6 +1,6 @@
-# Campus Knowledge Copilot (RAG)
+# EduRAG
 
-Campus Knowledge Copilot is an AI-powered **Retrieval-Augmented Generation (RAG) application** built with **Streamlit** and **LangChain**.  
+EduRAG is an AI-powered **Retrieval-Augmented Generation (RAG) application** built with **Streamlit** and **LangChain**.  
 It allows students and faculty to upload PDFs (syllabus, research papers, notes, handbooks, etc.) and query them conversationally to get **instant, contextual answers** with sources.  
 
 ---
@@ -16,7 +16,7 @@ It allows students and faculty to upload PDFs (syllabus, research papers, notes,
 
 ## Project Structure
 ```
-campus-knowledge-copilot
+EduRAG
 ┣ app.py # Main Streamlit app
 ┣ rag_pipeline.py # RAG pipeline (load, split, embed, retrieve, QA)
 ┣ requirements.txt # Dependencies
@@ -30,8 +30,8 @@ campus-knowledge-copilot
 
 1. **Clone the repository**  
 ```bash
-git clone https://github.com/yourusername/campus-knowledge-copilot.git
-cd campus-knowledge-copilot
+git clone https://github.com/yourusername/EduRAG.git
+cd EduRAG
 ```
 2. **Create a virtual environment & activate it**
 ```bash
