@@ -2,7 +2,7 @@ langchain
 langchain-community
 faiss-cpu
 sentence-transformers
-pydantic
+pydantic<2
 python-dotenv
 pypdf
 unstructured
@@ -13,3 +13,4 @@ streamlit
 ragas
 pandas
 numpy
+tiktoken
