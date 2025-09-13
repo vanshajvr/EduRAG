@@ -4,8 +4,8 @@ import os
 from rag_pipeline import load_documents, split_documents, create_vector_db, build_qa_chain, ask_question
 
 # Streamlit page config
-st.set_page_config(page_title="Campus Knowledge Copilot", layout="wide")
-st.title("Campus Knowledge Copilot (RAG)")
+st.set_page_config(page_title="EduRAG", layout="wide")
+st.title("EduRAG")
 st.markdown("Upload PDFs and ask questions. Answers come with source citations.")
 
 # Sidebar: Upload PDFs
