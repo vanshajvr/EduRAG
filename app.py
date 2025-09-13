@@ -1,5 +1,6 @@
 import streamlit as st
-from rag_pipeline import load_documents, split_documents, create_vector_db, build_qa_chain, ask_question
+from rag_pipeline import VectorIndex, Generator, RAGPipeline
+
 
 st.set_page_config(page_title="Campus Knowledge Copilot", layout="wide")
 
