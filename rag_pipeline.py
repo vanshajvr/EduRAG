@@ -1,76 +1,50 @@
 import os
-if self.vs is None:
-return self.create(docs)
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=120)
-chunks = text_splitter.split_documents(docs)
-self._vs.add_documents(chunks)
-self._vs.save_local(self.index_dir)
+from dotenv import load_dotenv
+from langchain_community.document_loaders import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_community.vectorstores import FAISS
+from langchain.chains import RetrievalQA
+
+load_dotenv()  # Load env vars from .env file
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
 
-def retrieve(self, query: str, k: int = 5) -> List[RetrievedChunk]:
-if self.vs is None:
-raise RuntimeError("Index not built. Run ingest.py first.")
-docs = self._vs.similarity_search_with_score(query, k=k)
-out = []
-for d, score in docs:
-out.append(RetrievedChunk(content=d.page_content, source=d.metadata.get("source", ""), score=float(score), metadata=d.metadata))
-return out
+def load_documents(pdf_path: str):
+    """Load PDF and return documents"""
+    loader = PyPDFLoader(pdf_path)
+    documents = loader.load()
+    return documents
 
 
-class Generator:
-def __init__(self, model_name: str = MODEL_NAME):
-self.client = OpenAI()
-self.model = model_name
+def split_documents(documents):
+    """Split into chunks"""
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    return text_splitter.split_documents(documents)
 
 
-def generate(self, prompt: str, system: str = "You are a helpful, precise study assistant.") -> str:
-resp = self.client.chat.completions.create(
-model=self.model,
-messages=[
-{"role": "system", "content": system},
-{"role": "user", "content": prompt},
-],
-temperature=0.2,
-)
-return resp.choices[0].message.content
+def create_vector_db(chunks):
+    """Create FAISS vector DB"""
+    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+    vector_db = FAISS.from_documents(chunks, embeddings)
+    return vector_db
 
 
-class RAGPipeline:
-def __init__(self, index: VectorIndex, gen: Optional[Generator] = None):
-self.index = index
-self.gen = gen
+def build_qa_chain(vector_db):
+    """Build RetrievalQA chain"""
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, openai_api_key=openai_api_key)
+    retriever = vector_db.as_retriever(search_kwargs={"k": 3})
+
+    qa_chain = RetrievalQA.from_chain_type(
+        llm=llm,
+        retriever=retriever,
+        chain_type="stuff",
+        return_source_documents=True
+    )
+    return qa_chain
 
 
-def answer(self, question: str, k: int = 5) -> Dict[str, Any]:
-retrieved = self.index.retrieve(question, k=k)
-context_blocks = []
-for r in retrieved:
-snippet = r.content[:500]
-context_blocks.append(f"Source: {r.source}\nSnippet: {snippet}")
-context_str = "\n\n".join(context_blocks)
-
-
-prompt = f"""
-You'll need to answer strictly from the provided sources. If the answer is not in the sources, say you don't know.
-
-
-Question: {question}
-
-
-Sources:
-{context_str}
-
-
-Could you answer with citations as [S1], [S2]... mapping to the numbered sources below, and then list the sources you used?
-"""
-if self.gen is None:
-return {
-"answer": "LLM not configured. Showing retrieved contexts only.",
-"contexts": [r.__dict__ for r in retrieved],
-}
-raw = self.gen.generate(prompt)
-result = {
-"answer": raw,
-"contexts": [r.__dict__ for r in retrieved],
-}
-return result
+def ask_question(qa_chain, query: str):
+    """Run query on RAG pipeline"""
+    result = qa_chain.invoke({"query": query})
+    return result
