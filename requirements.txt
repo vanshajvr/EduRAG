@@ -2,7 +2,7 @@ langchain
 langchain-community
 faiss-cpu
 sentence-transformers
-pydantic<2
+pydantic
 python-dotenv
 pypdf
 unstructured
