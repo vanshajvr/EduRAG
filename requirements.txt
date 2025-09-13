@@ -8,11 +8,7 @@ pypdf
 unstructured
 beautifulsoup4
 requests
-openai
 streamlit
-ragas
-pandas
-numpy
-tiktoken
 huggingface_hub
 transformers
+langchain-huggingface
