@@ -3,51 +3,57 @@ from rag_pipeline import load_documents, split_documents, create_vector_db, buil
 from graphviz import Digraph
 from pyvis.network import Network
 import streamlit.components.v1 as components
+import os
 
-# Streamlit page config
+# ------------------ Streamlit Page ------------------ #
 st.set_page_config(page_title="EduRAG", layout="wide")
 st.title("EduRAG – Campus Knowledge Copilot")
 st.markdown("Upload PDFs and ask questions. Answers come with source citations.")
 
-# Sidebar: Upload PDF
+# ------------------ Sidebar: Upload PDF ------------------ #
 st.sidebar.header("Upload Knowledge Base")
 uploaded_file = st.sidebar.file_uploader("Upload a PDF", type="pdf")
 
-# Sidebar: Settings
+# ------------------ Sidebar: Settings ------------------ #
 st.sidebar.header("Settings")
 top_k = st.sidebar.slider("Top-K documents to retrieve", 1, 10, 3)
+chunk_size = st.sidebar.slider("Chunk size (tokens)", 400, 1200, 800, step=100)
+overlap = st.sidebar.slider("Chunk overlap", 50, 300, 150, step=10)
 
-# Process uploaded PDF
+# ------------------ Process PDF ------------------ #
 if uploaded_file:
     pdf_path = "uploaded_file.pdf"
     with open(pdf_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
     st.sidebar.success("PDF uploaded successfully!")
 
-    # Load documents
     with st.spinner("Processing PDF..."):
+        # Load & split docs
         documents = load_documents(pdf_path)
-        chunks = split_documents(documents)
+        chunks = split_documents(documents, chunk_size=chunk_size, overlap=overlap)
+
+        # Build vector DB
         vector_db = create_vector_db(chunks)
-        qa_chain = build_qa_chain(vector_db)
+
+        # Build RAG chain
+        qa_chain = build_qa_chain(vector_db, top_k=top_k)
+
     st.success("Knowledge base ready! Ask your questions below.")
 
-    # Ask questions
+    # ------------------ User Question ------------------ #
     query = st.text_input("Ask a question about the uploaded PDF:")
     if query:
-        with st.spinner("Thinking..."):
+        with st.spinner("Generating answer..."):
             answer_data = ask_question(qa_chain, query)
-
             st.subheader("Answer:")
             st.write(answer_data["result"])
 
-            # Show sources
-            if "source_documents" in answer_data:
-                st.subheader("Sources:")
-                for i, doc in enumerate(answer_data["source_documents"], 1):
-                    st.markdown(f"**Source {i}:** {doc.metadata.get('source', 'Unknown')}")
+            st.subheader("Sources:")
+            for doc in answer_data["source_documents"]:
+                source = doc.metadata.get("source", "Unknown")
+                st.markdown(f"- {source}")
 
-    # --- Visual Flowchart ---
+    # ------------------ Pipeline Flowchart ------------------ #
     st.subheader("Pipeline Flowchart")
     dot = Digraph(comment="RAG Pipeline")
     dot.node('A', 'Upload PDF')
@@ -60,7 +66,7 @@ if uploaded_file:
     dot.edges(['AB', 'BC', 'CD', 'DE', 'EF', 'FG'])
     st.graphviz_chart(dot)
 
-    # --- Interactive Mindmap ---
+    # ------------------ Interactive Mindmap ------------------ #
     st.subheader("Interactive Mindmap")
     net = Network(height="400px", width="100%", notebook=True)
     nodes = ['Upload PDF', 'Load & Split Docs', 'FAISS DB', 'User Question', 'Retrieve Chunks', 'LLM Answer', 'Return Answer']
@@ -77,8 +83,8 @@ if uploaded_file:
     for edge in edges:
         net.add_edge(*edge)
     net.save_graph("rag_mindmap.html")
-    HtmlFile = open("rag_mindmap.html", 'r', encoding='utf-8')
-    components.html(HtmlFile.read(), height=500)
+    with open("rag_mindmap.html", 'r', encoding='utf-8') as f:
+        components.html(f.read(), height=500)
 
 else:
     st.info("Please upload a PDF from the sidebar to get started.")
