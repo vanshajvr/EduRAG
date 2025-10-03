@@ -17,12 +17,6 @@ uploaded_file = st.sidebar.file_uploader("Upload a PDF", type="pdf")
 st.sidebar.header("Settings")
 top_k = st.sidebar.slider("Top-K documents to retrieve", 1, 10, 3)
 
-# HF API Key
-hf_api_key = st.secrets.get("HF_API_KEY", "")
-if not hf_api_key:
-    st.warning("HF_API_KEY not found! Add it in Streamlit secrets to use the app.")
-    st.stop()
-
 # Process uploaded PDF
 if uploaded_file:
     pdf_path = "uploaded_file.pdf"
@@ -43,12 +37,15 @@ if uploaded_file:
     if query:
         with st.spinner("Thinking..."):
             answer_data = ask_question(qa_chain, query)
+
             st.subheader("Answer:")
             st.write(answer_data["result"])
 
-            st.subheader("Sources:")
-            for doc in answer_data["source_documents"]:
-                st.markdown(f"- {doc.metadata.get('source', 'Unknown')}")
+            # Show sources
+            if "source_documents" in answer_data:
+                st.subheader("Sources:")
+                for i, doc in enumerate(answer_data["source_documents"], 1):
+                    st.markdown(f"**Source {i}:** {doc.metadata.get('source', 'Unknown')}")
 
     # --- Visual Flowchart ---
     st.subheader("Pipeline Flowchart")
@@ -69,12 +66,14 @@ if uploaded_file:
     nodes = ['Upload PDF', 'Load & Split Docs', 'FAISS DB', 'User Question', 'Retrieve Chunks', 'LLM Answer', 'Return Answer']
     for node in nodes:
         net.add_node(node, label=node)
-    edges = [('Upload PDF', 'Load & Split Docs'),
-             ('Load & Split Docs', 'FAISS DB'),
-             ('FAISS DB', 'Retrieve Chunks'),
-             ('User Question', 'Retrieve Chunks'),
-             ('Retrieve Chunks', 'LLM Answer'),
-             ('LLM Answer', 'Return Answer')]
+    edges = [
+        ('Upload PDF', 'Load & Split Docs'),
+        ('Load & Split Docs', 'FAISS DB'),
+        ('FAISS DB', 'Retrieve Chunks'),
+        ('User Question', 'Retrieve Chunks'),
+        ('Retrieve Chunks', 'LLM Answer'),
+        ('LLM Answer', 'Return Answer')
+    ]
     for edge in edges:
         net.add_edge(*edge)
     net.save_graph("rag_mindmap.html")
