@@ -1,15 +1,22 @@
+# Core
 streamlit
+python-dotenv
+requests
+beautifulsoup4
+
+# LangChain & Ecosystem
 langchain
 langchain-community
-faiss-cpu
-sentence-transformers
-pydantic
-python-dotenv
-pypdf
-unstructured
-beautifulsoup4
-requests
 huggingface_hub
 transformers
+sentence-transformers
+faiss-cpu
+pydantic
+
+# Document Processing
+pypdf
+unstructured
+
+# Visualization
 pyvis
 graphviz
