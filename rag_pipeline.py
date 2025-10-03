@@ -5,11 +5,11 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_huggingface import HuggingFaceEndpoint
+from langchain_community.llms import HuggingFacePipeline
+from transformers import pipeline
 
-# Load .env
+# Load .env (not needed for local models, but kept for future flexibility)
 load_dotenv()
-hf_api_key = os.getenv("HF_API_KEY", "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")
 
 # --- Load PDF ---
 def load_documents(pdf_path: str):
@@ -27,14 +27,16 @@ def create_vector_db(chunks):
     vector_db = FAISS.from_documents(chunks, embeddings)
     return vector_db
 
-# --- Build QA chain ---
+# --- Build QA chain with local flan-t5 ---
 def build_qa_chain(vector_db):
-    llm = HuggingFaceEndpoint(
-        repo_id="google/flan-t5-small",
-        token=hf_api_key,
-        temperature=0.3,
-        max_new_tokens=300
+    generator = pipeline(
+        "text2text-generation",
+        model="google/flan-t5-small",
+        tokenizer="google/flan-t5-small",
+        max_length=512
     )
+    llm = HuggingFacePipeline(pipeline=generator)
+
     retriever = vector_db.as_retriever(search_kwargs={"k": 3})
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
@@ -46,5 +48,5 @@ def build_qa_chain(vector_db):
 
 # --- Ask question ---
 def ask_question(qa_chain, query: str):
-    result = qa_chain({"query": query})
+    result = qa_chain.invoke({"query": query})
     return result
