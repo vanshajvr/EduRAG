@@ -6,6 +6,7 @@ from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.llms import HuggingFacePipeline
+from langchain_community.llms import HuggingFaceEndpoint
 from transformers import pipeline
 
 # Load .env (not needed for local models, but kept for future flexibility)
