@@ -5,7 +5,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.llms import HuggingFacePipeline, HuggingFaceEndpoint
+from langchain_community.llms import HuggingFacePipeline
 from transformers import pipeline
 
 # Load .env (not needed for local models, but kept for future flexibility)
@@ -33,7 +33,7 @@ def build_qa_chain(vector_db):
         "text2text-generation",
         model="google/flan-t5-small",
         tokenizer="google/flan-t5-small",
-        max_length=512
+        max_length=300
     )
     llm = HuggingFacePipeline(pipeline=generator)
 
