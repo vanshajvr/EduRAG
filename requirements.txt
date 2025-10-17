@@ -3,12 +3,12 @@ langchain
 langchain-community
 faiss-cpu
 sentence-transformers
-pydantic
+transformers
+torch
+pyvis
+graphviz
 python-dotenv
 pypdf
 unstructured
 beautifulsoup4
 requests
-transformers
-pyvis
-graphviz
