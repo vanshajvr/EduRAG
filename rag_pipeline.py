@@ -20,8 +20,11 @@ def load_documents(pdf_path: str):
     return PyPDFLoader(pdf_path).load()
 
 # --- Split into chunks ---
-def split_documents(documents):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=600, chunk_overlap=120)
+def split_documents(documents, chunk_size=600, overlap=120):
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=overlap
+    )
     return splitter.split_documents(documents)
 
 # --- Create vector DB ---
