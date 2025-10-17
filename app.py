@@ -30,8 +30,9 @@ if uploaded_file:
     with st.spinner("Processing PDF..."):
         # Load & split docs
         documents = load_documents(pdf_path)
-        
-
+        if not documents:
+            st.error("No content loaded from file. Please upload a valid PDF.")
+        else:
         chunks = split_documents(documents, chunk_size=chunk_size, overlap=overlap)
 
         # Build vector DB
