@@ -30,6 +30,10 @@ if uploaded_file:
     with st.spinner("Processing PDF..."):
         # Load & split docs
         documents = load_documents(pdf_path)
+        st.write("Documents loaded:", documents)
+        st.write("Chunk size:", chunk_size)
+        st.write("Overlap:", overlap)
+
         chunks = split_documents(documents, chunk_size=chunk_size, overlap=overlap)
 
         # Build vector DB
