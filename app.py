@@ -33,7 +33,7 @@ if uploaded_file:
         if not documents:
             st.error("No content loaded from file. Please upload a valid PDF.")
         else:
-        chunks = split_documents(documents, chunk_size=chunk_size, overlap=overlap)
+            chunks = split_documents(documents, chunk_size=chunk_size, overlap=overlap)
 
         # Build vector DB
         vector_db = create_vector_db(chunks)
